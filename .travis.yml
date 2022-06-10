@@ -1,0 +1,37 @@
+language: generic
+dist: xenial
+os:
+  - linux
+services:
+  - docker
+
+branches:
+  only:
+    - master
+
+before_install:
+  - docker build -t react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true react-test npm run test
+
+after_success:
+  - docker build -t caecheverri01/multi-client ./client
+  - docker build -t caecheverri01/multi-nginx ./nginx
+  - docker build -t caecheverri01/multi-server ./server
+  - docker build -t caecheverri01/multi-worker ./worker
+  - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_ID" --password-stdin
+  - docker push caecheverri01/multi-client
+  - docker push caecheverri01/multi-nginx
+  - docker push caecheverri01/multi-server
+  - docker push caecheverri01/multi-worker
+
+#deploy:
+#  provider: elasticbeanstalk
+#  region: "us-east-1"
+#  app: "docker-react"
+#  env: "Dockerreact-env"
+#  bucket: "elasticbeanstalk-us-east-1-000744531605"
+#  bucket_path: "docker-react"
+#  access_key_id: $AWS_ACCESS_KEY
+#  secret_access_key: $AWS_SECRET_KEY
